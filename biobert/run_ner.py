@@ -617,8 +617,12 @@ def main(_):
             is_training=False,
             drop_remainder=predict_drop_remainder)
 
+        eval_steps = None
+        if FLAGS.use_tpu:
+            eval_steps = int(len(predict_examples) / FLAGS.eval_batch_size)
+
         result = estimator.predict(input_fn=predict_input_fn)
-        prf = estimator.evaluate(input_fn=predict_input_fn, steps=None)
+        prf = estimator.evaluate(input_fn=predict_input_fn, steps=eval_steps)
         output_predict_file = os.path.join(FLAGS.output_dir, "label_test.txt")
         with tf.gfile.GFile(output_predict_file,'w') as writer:
             tf.logging.info("***** token-level evaluation results *****")
