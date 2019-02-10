@@ -148,7 +148,7 @@ class DataProcessor(object):
     @classmethod
     def _read_data(cls, input_file):
         """Reads a BIO data."""
-        with open(input_file) as f:
+        with tf.gfile.GFile(input_file) as f:
             lines = []
             words = []
             labels = []
@@ -215,18 +215,13 @@ class NerProcessor(DataProcessor):
 def write_tokens(tokens,mode):
     if mode=="test":
         path = os.path.join(FLAGS.output_dir, "token_"+mode+".txt")
-        wf = open(path,'a')
+        wf = tf.gfile.GFile(path,'a')
         for token in tokens:
             if token!="**NULL**":
                 wf.write(token+'\n')
         wf.close()
 
-def convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer,mode):
-    label_map = {}
-    for (i, label) in enumerate(label_list,1):
-        label_map[label] = i
-    with open(FLAGS.output_dir+'label2id.pkl','wb') as w:
-        pickle.dump(label_map,w)
+def convert_single_example(ex_index, example, label_map, max_seq_length, tokenizer,mode):
     textlist = example.text.split(' ')
     labellist = example.label.split(' ')
     tokens = []
@@ -302,11 +297,17 @@ def convert_single_example(ex_index, example, label_list, max_seq_length, tokeni
 def filed_based_convert_examples_to_features(
         examples, label_list, max_seq_length, tokenizer, output_file,mode=None
 ):
+    label_map = {}
+    for (i, label) in enumerate(label_list, 1):
+        label_map[label] = i
+    with tf.gfile.GFile(FLAGS.output_dir + 'label2id.pkl', 'wb') as w:
+        pickle.dump(label_map, w)
+
     writer = tf.python_io.TFRecordWriter(output_file)
     for (ex_index, example) in enumerate(examples):
         if ex_index % 5000 == 0:
             tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
-        feature = convert_single_example(ex_index, example, label_list, max_seq_length, tokenizer,mode)
+        feature = convert_single_example(ex_index, example, label_map, max_seq_length, tokenizer,mode)
 
         def create_int_feature(values):
             f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
@@ -577,14 +578,14 @@ def main(_):
             drop_remainder=eval_drop_remainder)
         result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps)
         output_eval_file = os.path.join(FLAGS.output_dir, "eval_results.txt")
-        with open(output_eval_file, "w") as writer:
+        with tf.gfile.GFile(output_eval_file, "w") as writer:
             tf.logging.info("***** Eval results *****")
             for key in sorted(result.keys()):
                 tf.logging.info("  %s = %s", key, str(result[key]))
                 writer.write("%s = %s\n" % (key, str(result[key])))
     if FLAGS.do_predict:
         token_path = os.path.join(FLAGS.output_dir, "token_test.txt")
-        with open(FLAGS.output_dir+'label2id.pkl','rb') as rf:
+        with tf.gfile.GFile(FLAGS.output_dir+'label2id.pkl','rb') as rf:
             label2id = pickle.load(rf)
             id2label = {value:key for key,value in label2id.items()}
         if os.path.exists(token_path):
@@ -613,7 +614,7 @@ def main(_):
         result = estimator.predict(input_fn=predict_input_fn)
         prf = estimator.evaluate(input_fn=predict_input_fn, steps=None)
         output_predict_file = os.path.join(FLAGS.output_dir, "label_test.txt")
-        with open(output_predict_file,'w') as writer:
+        with tf.gfile.GFile(output_predict_file,'w') as writer:
             tf.logging.info("***** token-level evaluation results *****")
             for key in sorted(prf.keys()):
                 tf.logging.info("  %s = %s", key, str(prf[key]))
