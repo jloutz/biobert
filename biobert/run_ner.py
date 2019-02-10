@@ -401,7 +401,9 @@ def create_model(bert_config, is_training, input_ids, input_mask,
         loss = tf.reduce_sum(per_example_loss)
         probabilities = tf.nn.softmax(logits, axis=-1)
         predict = tf.argmax(probabilities,axis=-1)
-        return (loss, per_example_loss, logits,predict)
+        predict = tf.argmax(probabilities, axis=-1)
+        predict_dict = {'predictions': predict}  # this way it is not shot down by check in TPUEstimatorSpec
+        return loss, per_example_loss, logits, predict_dict
         ##########################################################################
         
 def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
@@ -622,6 +624,9 @@ def main(_):
             eval_steps = int(len(predict_examples) / FLAGS.eval_batch_size)
 
         result = estimator.predict(input_fn=predict_input_fn)
+        result = list(result)
+        result = [pred['predictions'] for pred in result]
+
         prf = estimator.evaluate(input_fn=predict_input_fn, steps=eval_steps)
         output_predict_file = os.path.join(FLAGS.output_dir, "label_test.txt")
         with tf.gfile.GFile(output_predict_file,'w') as writer:
