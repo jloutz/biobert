@@ -1,12 +1,3 @@
-import argparse
-
-
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('--token_test_path', type=str,  help='')
-parser.add_argument('--label_test_path', type=str,  help='')
-parser.add_argument('--answer_path', type=str,  help='')
-parser.add_argument('--output_dir', type=str,  help='')
-args = parser.parse_args()
 
 def detokenize(golden_path, pred_token_test_path, pred_label_test_path, output_dir):
     
@@ -53,9 +44,10 @@ def detokenize(golden_path, pred_token_test_path, pred_label_test_path, output_d
                 continue
             pred['labels'].append(line)
             
-    if (len(pred['toks']) != len(pred['labels'])): # Sanity check
-        print("Error! : len(pred['toks']) != len(pred['labels']) : Please report us")
-        raise
+    #if (len(pred['toks']) != len(pred['labels'])): # Sanity check
+     #   err = "Error! : len(pred['toks']) != len(pred['labels']) : Please report us"
+      #  print(err)
+       # raise Exception(err)
     
     bert_pred = dict({'toks':[], 'labels':[]})
     for t, l in zip(pred['toks'],pred['labels']):
@@ -68,13 +60,15 @@ def detokenize(golden_path, pred_token_test_path, pred_label_test_path, output_d
             bert_pred['labels'].append(l)
     
     if (len(bert_pred['toks']) != len(bert_pred['labels'])): # Sanity check
-        print("Error! : len(bert_pred['toks']) != len(bert_pred['labels']) : Please report us")
-        raise
+        err = "Error! : len(bert_pred['toks']) != len(bert_pred['labels']) : Please report us"
+        print(err)
+        raise err
    
     if (len(ans['labels']) != len(bert_pred['labels'])): # Sanity check
         print(len(ans['labels']), len(bert_pred['labels']))
-        print("Error! : len(ans['labels']) != len(bert_pred['labels']) : Please report us")
-        raise
+        err = "Error! : len(ans['labels']) != len(bert_pred['labels']) : Please report us"
+        print(err)
+        raise err
     
     with open(output_dir+'/NER_result_conll.txt', 'w') as out_:
         idx=0
@@ -85,4 +79,12 @@ def detokenize(golden_path, pred_token_test_path, pred_label_test_path, output_d
                 out_.write("%s %s-MISC %s-MISC\n"%(bert_pred['toks'][idx], ans['labels'][idx], bert_pred['labels'][idx]))
                 idx+=1
 
-detokenize(args.answer_path, args.token_test_path, args.label_test_path, args.output_dir)
+if __name__=="__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--token_test_path', default="../../results/token_test.txt", type=str, help='')
+    parser.add_argument('--label_test_path', default="../../results/label_test.txt", type=str, help='')
+    parser.add_argument('--answer_path', default="../../results/test.tsv", type=str, help='')
+    parser.add_argument('--output_dir', default="../../results",type=str, help='')
+    args = parser.parse_args()
+    detokenize(args.answer_path, args.token_test_path, args.label_test_path, args.output_dir)

@@ -26,6 +26,6 @@ python biobert/run_ner.py \
 	   --vocab_file=$BIOBERT_DIR/vocab.txt \
 	   --bert_config_file=$BIOBERT_DIR/bert_config.json \
 	   --init_checkpoint=$BIOBERT_DIR/biobert_model.ckpt \
-	   --num_train_epochs=10.0 \
+	   --num_train_epochs=50.0 \
 	   --data_dir=$NER_DIR/ \
 	   --output_dir=$OUTPUT_DIR
