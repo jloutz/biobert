@@ -37,6 +37,12 @@ flags.DEFINE_string(
 )
 
 flags.DEFINE_string(
+    "local_output_dir", "output",
+    "The output directory where temp results will be written."
+)
+
+
+flags.DEFINE_string(
     "bert_config_file", None,
     "The config json file corresponding to the pre-trained BERT model."
 )
@@ -214,8 +220,8 @@ class NerProcessor(DataProcessor):
 
 def write_tokens(tokens,mode):
     if mode=="test":
-        path = os.path.join(FLAGS.output_dir, "token_"+mode+".txt")
-        wf = tf.gfile.GFile(path,'w')
+        path = os.path.join(FLAGS.local_output_dir, "token_"+mode+".txt")
+        wf = tf.gfile.GFile(path,'a+')
         for token in tokens:
             if token!="**NULL**":
                 wf.write(token+'\n')
@@ -600,10 +606,10 @@ def main(_):
         tf.logging.info("***** Running prediction*****")
         tf.logging.info("  Num examples = %d", len(predict_examples))
         tf.logging.info("  Batch size = %d", FLAGS.predict_batch_size)
-        if FLAGS.use_tpu:
+        #if FLAGS.use_tpu:
             # Warning: According to tpu_estimator.py Prediction on TPU is an
             # experimental feature and hence not supported here
-            raise ValueError("Prediction in TPU not supported")
+            #raise ValueError("Prediction in TPU not supported")
         predict_drop_remainder = True if FLAGS.use_tpu else False
         predict_input_fn = file_based_input_fn_builder(
             input_file=predict_file,
