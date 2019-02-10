@@ -628,7 +628,7 @@ def main(_):
         result = [pred['predictions'] for pred in result]
 
         prf = estimator.evaluate(input_fn=predict_input_fn, steps=eval_steps)
-        output_predict_file = os.path.join(FLAGS.output_dir, "label_test.txt")
+        output_predict_file = os.path.join(FLAGS.local_output_dir, "label_test.txt")
         with tf.gfile.GFile(output_predict_file,'w') as writer:
             tf.logging.info("***** token-level evaluation results *****")
             for key in sorted(prf.keys()):
